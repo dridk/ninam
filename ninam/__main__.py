@@ -26,7 +26,7 @@ def space_to_payload(spaces:list) -> bytes:
     """
     spaces = [ord(s) for s in spaces]
 
-    for i in range(0, len(spaces), 4):
+    for i in range(0, len(spaces) - 4, 4):
         letter = 0b00000000
         p1 = WHITESPACE.index(spaces[i])
         p2 = WHITESPACE.index(spaces[i+1])
@@ -68,6 +68,7 @@ def decode(text:str):
         if ord(letter) in WHITESPACE:
             spaces.append(letter)
 
+    print(spaces)
     payload = "".join([f"{chr(i)}" for i in space_to_payload(spaces)])
 
     return payload
