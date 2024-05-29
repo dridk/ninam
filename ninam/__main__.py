@@ -68,7 +68,6 @@ def decode(text:str):
         if ord(letter) in WHITESPACE:
             spaces.append(letter)
 
-    print(spaces)
     payload = "".join([f"{chr(i)}" for i in space_to_payload(spaces)])
 
     return payload
