@@ -1,4 +1,5 @@
-
+import argparse
+import sys
 
 WHITESPACE = [32,8198,8201,8200]
 
@@ -74,23 +75,38 @@ def decode(text:str):
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser(description="Encode or decode files with payload")
+    subparsers = parser.add_subparsers(dest="command", help="Choose command")
 
-    message = """
-    Hello Mrs Dupont,
-    I hope you're well. I'm writing to ask if it would be possible for me to work 
-    from home tomorrow. I'm having some transport problems at the moment, and I'm worried 
-    that this might affect my punctuality at the office. 
-    What's more, I have all the equipment I need at home to complete my tasks efficiently.
-    I can assure you that I will remain contactable throughout the day and will meet
-    all deadlines and scheduled meetings. If you have any particular 
-    preferences or requirements for my work tomorrow, please let me know and I will organise accordingly.    
-    """
-    payload = "ilove you"
+    encode_parser = subparsers.add_parser("encode", help="Encode file with payload")
+    encode_parser.add_argument("-i", "--input",type=argparse.FileType("r"), default=sys.stdin)
+    encode_parser.add_argument("-p", "--payload", required=True, help="Payload to encode")
 
-    print("# ENCODE ")
-    encoded = encode(message, payload)
+    decode_parser= subparsers.add_parser("decode", help="Extract payload from text")
+    decode_parser.add_argument("-i", "--input",type=argparse.FileType("r"), default=sys.stdin)
+    args = parser.parse_args()
 
-    print(encoded)
+    if args.command == "encode":
+        text = args.input.read()
+        payload = args.payload 
+        print(encode(text, payload))        
 
-    print("# DECODE ")
-    print(decode(encoded))
+    if args.command == "decode":
+        text = args.input.read()
+        payload = decode(text)
+        print(payload)            
+    # message = """
+    # Hello Mrs Dupont,
+    # I hope you're well. I'm writing to ask if it would be possible for me to work 
+    # from home tomorrow. I'm having some transport problems at the moment, and I'm worried 
+    # that this might affect my punctuality at the office. 
+    # What's more, I have all the equipment I need at home to complete my tasks efficiently.
+    # I can assure you that I will remain contactable throughout the day and will meet
+    # all deadlines and scheduled meetings. If you have any particular 
+    # preferences or requirements for my work tomorrow, please let me know and I will organise accordingly.    
+    # """
+    # payload = "ilove you"
+
+    # encoded = encode(message, payload)
+
+
