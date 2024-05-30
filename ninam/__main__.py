@@ -1,10 +1,31 @@
 import argparse
 import sys
 
-WHITESPACE = [32,8198,8201,8200]
+WHITESPACE = [32,8198,8201,8200,160,8192,8193,8194,8195,8196,8197,8202,8239,8287,8199,9]
 
 
-def payload_to_space(payload:bytes)->list:
+def byte_to_space(character:int, bit_per_whitespace = 2):
+
+    # Select symbols to used 
+    symbols_count = 2**bit_per_whitespace
+    symbols = WHITESPACE[:symbols_count]
+
+    for i in range(0,8//bit_per_whitespace):
+
+        mask = 2**bit_per_whitespace - 1 
+        mask = mask << i * bit_per_whitespace
+        read = (character & mask) >> i * bit_per_whitespace
+        symbol = symbols[read]        
+        
+        print(format(character, "08b")) 
+        print(format(mask, "08b"))
+        print(format(read, "08b"))
+        print("===")
+
+        return symbol
+
+
+def payload_to_space(payload:bytes, bitsize=2)->list:
     """
     Transform a payload as a list of white space         
     """
@@ -27,17 +48,19 @@ def space_to_payload(spaces:list) -> bytes:
     spaces = [ord(s) for s in spaces]
 
     for i in range(0, len(spaces) - 4, 4):
-        letter = 0b00000000
+        empty = 0b00000000
         p1 = WHITESPACE.index(spaces[i])
         p2 = WHITESPACE.index(spaces[i+1])
         p3 = WHITESPACE.index(spaces[i+2])
         p4 = WHITESPACE.index(spaces[i+3])
             
-        letter = letter|(p1 << 6)
+        letter = empty |(p1 << 6)
         letter = letter|(p2 << 4)
         letter = letter|(p3 << 2)
         letter = letter|p4 
-        yield letter
+
+        if letter != empty:
+            yield letter
 
 
 def encode(text:str, payload:str):
@@ -69,12 +92,16 @@ def decode(text:str):
             spaces.append(letter)
 
     payload = "".join([f"{chr(i)}" for i in space_to_payload(spaces)])
-
+    for p in payload:
+        print(ord(p))    
     return payload
 
 
 if __name__ == "__main__":
 
+
+    print(byte_to_space(53))
+    exit(0)
     parser = argparse.ArgumentParser(description="Encode or decode files with payload")
     subparsers = parser.add_subparsers(dest="command", help="Choose command")
 
