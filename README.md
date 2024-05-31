@@ -1,4 +1,4 @@
-# sqlite2duckdb
+# Ninam
 
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ninam)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/ninam)
