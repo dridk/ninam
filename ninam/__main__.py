@@ -119,16 +119,11 @@ def encode(text:str, payload:str, bitsize=2):
     payload = payload.encode()
     max_size = max_payload_size(text, bitsize)
 
-    logging.warning(f"{text.count(' ')}")
-    logging.warning(f"{max_size}")
-    logging.warning(len(payload))
-    
 
     if len(payload) > max_size:
         logging.warning(f"Your payload ({len(payload)} bytes) exeed the amount of white space available in the text ({max_size} bytes). Spaces will be added at the end of the file")
         diff = (len(payload) - max_size) 
         space_required = math.floor((8/bitsize) * diff)
-        logging.warning(space_required)
         text += ' ' * space_required
         
     
