@@ -4,18 +4,17 @@
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/ninam)
 
 
-Ninam is a steganography tool to encode or decode a payload in a text file by replacing white space character.
-I created this programme because I remembered when I was younger that I liked to send people secret messages by hiding them in a text message.
+Ninam is a steganography tool for encoding and decoding a payload in a text file by replacing white space characters.
+I created this programme because I remembered when I was younger that I liked to send people secret messages by hiding them in a text message or an email.
 
 ## How it works ? 
 
 All spaces in the text are recovered and replaced by other [unicode space characters](https://en.wikipedia.org/wiki/Whitespace_character). If there is not enough space available, additional spaces will be added at the end. 
-You can use 1-bit, 2-bit or 4-bit encoding. This means using 2, 4 or 16 white spaces. The larger the bitsize, the larger your payload can be, but at the risk of having slightly suspicious white spaces.
-
+You can use 1-bit, 2-bit or 4-bit encoding. This means using 2, 4 or 16 white spaces. The larger the bitsize, the larger your payload can be, but at the risk of having slightly suspicious white spaces which doesn't work everywhere.
 
 ## Installation 
 
-There is no dependencies and should work with all version of python>3.x
+There is no dependencies. It should work with all version of python>3.x
 
 ```bash
 pip install ninam
