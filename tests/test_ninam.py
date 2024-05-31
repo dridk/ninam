@@ -1,4 +1,18 @@
-from ninam.__main__ import encode, decode
+import ninam.__main__ as nim 
+
+
+
+def test_payload():
+
+
+    payload = "hello"
+
+    for bit in (1,2,4):
+        spaces = nim.payload_to_space(payload.encode(),bit)
+        assert nim.space_to_payload(spaces,bit) == payload.encode()
+    
+
+
 
 def test_encode_decode():
 
@@ -19,6 +33,6 @@ def test_encode_decode():
 
     payload = "I love you" 
 
-    stegano_message = encode(message,payload)
+    stegano_message = nim.encode(message,payload)
 
-    assert payload == decode(stegano_message)
+    assert payload == nim.decode(stegano_message)

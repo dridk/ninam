@@ -4,77 +4,119 @@ import sys
 WHITESPACE = [32,8198,8201,8200,160,8192,8193,8194,8195,8196,8197,8202,8239,8287,8199,9]
 
 
-def byte_to_space(character:int, bit_per_whitespace = 2):
+def check_bit_size(bitsize = 2):
 
-    # Select symbols to used 
-    symbols_count = 2**bit_per_whitespace
+    def is_power_of_two(n):
+        return (n != 0) and (n & (n-1) == 0)
+
+    if not is_power_of_two(bitsize):
+        raise Exception(f"bitsize must be a power of 2")
+
+    if 2**bitsize > len(WHITESPACE):
+        raise Exception(f"Not enough whitespace symbols to use {bitsize} per whitespace ")
+
+    
+
+
+
+def payload_to_space(payload:bytes, bitsize=2)->list[bytes]:
+    """
+    Transform a payload into white spaces     
+
+    Examples : 
+
+        with 1 bits per space:
+     
+        payload = 10000011  10000000   
+        spaces  = ABBBBBAA  ABBBBBBB 
+
+        with 2 bits per space:
+            payload = 10 00 00 11  10 00 00 00   
+
+        spaces  = A  B  A  C   A  B  B  B 
+
+        with 4 bits per space:
+    
+        payload = 1000 0011  1000 0000   
+        spaces  = A    B     A    C
+    
+   
+    """
+    check_bit_size(bitsize)
+
+    spaces = []
+    symbols_count = 2**bitsize 
     symbols = WHITESPACE[:symbols_count]
-
-    for i in range(0,8//bit_per_whitespace):
-
-        mask = 2**bit_per_whitespace - 1 
-        mask = mask << i * bit_per_whitespace
-        read = (character & mask) >> i * bit_per_whitespace
-        symbol = symbols[read]        
-        
-        print(format(character, "08b")) 
-        print(format(mask, "08b"))
-        print(format(read, "08b"))
-        print("===")
-
-        return symbol
-
-
-def payload_to_space(payload:bytes, bitsize=2)->list:
-    """
-    Transform a payload as a list of white space         
-    """
+    max = 8//bitsize
     for byte in payload:
+        # write one byte
+        for i in range(0, max):
+            mask = 2**bitsize-1
+            shift = (max-i-1) * bitsize
+            mask = mask << shift
+            read = (byte & mask) >> shift
+            symbol = symbols[read]
+            spaces.append(symbol)
 
-        b1 = (byte & 0b11000000) >> 6
-        b2 = (byte & 0b00110000) >> 4
-        b3 = (byte & 0b00001100) >> 2
-        b4 = (byte & 0b00000011)
-
-        for b in (b1,b2,b3,b4):
-            code = WHITESPACE[b]
-            yield chr(code)
+    return spaces
         
 
-def space_to_payload(spaces:list) -> bytes:
+
+def space_to_payload(spaces:list[bytes], bitsize = 2) -> bytes:
     """
-    Transform a list of whitespace into bytes
+    Transform a list of white spaces into a payload
+
+    Exemples : 
+    
+    With bitsize = 1 
+    
+        spaces  = ABABABAB
+        payload = 10101010
+
+    With bitsize = 2 
+
+        spaces  = A  B  C  D
+        payload = 01 00 11 10
+
+    With bitsize = 4
+
+        spaces  =  A     B 
+        payload =  0111  1110
+        
     """
-    spaces = [ord(s) for s in spaces]
+    
+    check_bit_size(bitsize)
+    
+    payload = bytearray()
+    max = 8//bitsize
+    for i in range(0, len(spaces), max):
+        # One chunk = 1 byte
+        chunk = spaces[i: i+max]
+        # Start reading one byte 
+        byte = 0x0
+        for i, space in enumerate(chunk):
+            index = WHITESPACE.index(space)            
+            shift = (max-1-i) * bitsize
+            byte = byte | (index << shift)
+        
+        if byte != 0x0:
+            payload.append(byte)
+        
 
-    for i in range(0, len(spaces) - 4, 4):
-        empty = 0b00000000
-        p1 = WHITESPACE.index(spaces[i])
-        p2 = WHITESPACE.index(spaces[i+1])
-        p3 = WHITESPACE.index(spaces[i+2])
-        p4 = WHITESPACE.index(spaces[i+3])
-            
-        letter = empty |(p1 << 6)
-        letter = letter|(p2 << 4)
-        letter = letter|(p3 << 2)
-        letter = letter|p4 
+    return bytes(payload)
 
-        if letter != empty:
-            yield letter
-
-
-def encode(text:str, payload:str):
+def encode(text:str, payload:str, bitsize=2):
     """ 
     Encode a payload into a text
     """
     payload = payload.encode()
 
-    spaces = list(payload_to_space(payload))
+    spaces = payload_to_space(payload, bitsize)
     index = 0
     encoded = ""
     for letter in text:
         if letter == " " and index < len(spaces):
-            encoded += spaces[index]
+            encoded += chr(spaces[index])
             index+=1 
         else:
             encoded += letter
@@ -82,35 +124,46 @@ def encode(text:str, payload:str):
     return encoded
 
 
-def decode(text:str):
+def decode(text:str, bitsize=2):
     """
     Extract payload from text 
     """
     spaces = []
     for letter in text:
         if ord(letter) in WHITESPACE:
-            spaces.append(letter)
+            spaces.append(ord(letter))
 
-    payload = "".join([f"{chr(i)}" for i in space_to_payload(spaces)])
-    for p in payload:
-        print(ord(p))    
+    payload = "".join([f"{chr(i)}" for i in space_to_payload(spaces, bitsize)])
     return payload
 
 
 if __name__ == "__main__":
 
 
-    print(byte_to_space(53))
-    exit(0)
-    parser = argparse.ArgumentParser(description="Encode or decode files with payload")
+    description= """
+    Ninam is a steganography tool to encode or decode a payload in a text file.
+    It works by replacing the space character with other unicode space characters.
+
+    You can select how many bit you want to encode by specify the bitsize arguments.
+    By default, it uses 2 bits per white space.
+
+    Usage examples:    
+        
+        ninam encode -i input.txt -p iloveyou > output.txt
+        ninam decode -i output.txt 
+    """
+
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
     subparsers = parser.add_subparsers(dest="command", help="Choose command")
 
     encode_parser = subparsers.add_parser("encode", help="Encode file with payload")
     encode_parser.add_argument("-i", "--input",type=argparse.FileType("r"), default=sys.stdin)
     encode_parser.add_argument("-p", "--payload", required=True, help="Payload to encode")
+    encode_parser.add_argument("-b", "--bitsize", required=False, choices=[1,2,4], default=2, help="How many bit per white space")
 
     decode_parser= subparsers.add_parser("decode", help="Extract payload from text")
     decode_parser.add_argument("-i", "--input",type=argparse.FileType("r"), default=sys.stdin)
+    decode_parser.add_argument("-b", "--bitsize", required=False, choices=[1,2,4], default=2, help="How many bit per white space")
     args = parser.parse_args()
 
     if args.command == "encode":
