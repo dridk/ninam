@@ -23,7 +23,7 @@ pip install ninam
 ## Usage 
 
 ``` bash  
-    # By default, it used 2 bits
+    # By default it uses 2 bits
     ninam encode -i input.txt -p iloveyou > output.txt
     ninam decode -i output.txt 
 
