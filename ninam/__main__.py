@@ -1,10 +1,12 @@
 import argparse
 import sys
+import logging
+import math
 
 WHITESPACE = [32,8198,8201,8200,160,8192,8193,8194,8195,8196,8197,8202,8239,8287,8199,9]
 
 
-def check_bit_size(bitsize = 2):
+def assert_wrong_bitsize(bitsize = 2):
 
     def is_power_of_two(n):
         return (n != 0) and (n & (n-1) == 0)
@@ -15,8 +17,13 @@ def check_bit_size(bitsize = 2):
     if 2**bitsize > len(WHITESPACE):
         raise Exception(f"Not enough whitespace symbols to use {bitsize} per whitespace ")
 
-    
 
+def max_payload_size(text:str, bitsize=2):
+    """
+    Check the maximum size of the payload
+    """
+
+    return math.floor(text.count(' ') / ( 8 / bitsize))
 
 
 def payload_to_space(payload:bytes, bitsize=2)->list[bytes]:
@@ -42,7 +49,7 @@ def payload_to_space(payload:bytes, bitsize=2)->list[bytes]:
     
    
     """
-    check_bit_size(bitsize)
+    assert_wrong_bitsize(bitsize)
 
     spaces = []
     symbols_count = 2**bitsize 
@@ -85,7 +92,7 @@ def space_to_payload(spaces:list[bytes], bitsize = 2) -> bytes:
         
     """
     
-    check_bit_size(bitsize)
+    assert_wrong_bitsize(bitsize)
     
     payload = bytearray()
     max = 8//bitsize
@@ -98,7 +105,7 @@ def space_to_payload(spaces:list[bytes], bitsize = 2) -> bytes:
             index = WHITESPACE.index(space)            
             shift = (max-1-i) * bitsize
             byte = byte | (index << shift)
-        
+
         if byte != 0x0:
             payload.append(byte)
         
@@ -110,7 +117,21 @@ def encode(text:str, payload:str, bitsize=2):
     Encode a payload into a text
     """
     payload = payload.encode()
+    max_size = max_payload_size(text, bitsize)
 
+    logging.warning(f"{text.count(' ')}")
+    logging.warning(f"{max_size}")
+    logging.warning(len(payload))
+    
+
+    if len(payload) > max_size:
+        logging.warning(f"Your payload ({len(payload)} bytes) exeed the amount of white space available in the text ({max_size} bytes). Spaces will be added at the end of the file")
+        diff = (len(payload) - max_size) 
+        space_required = math.floor((8/bitsize) * diff)
+        logging.warning(space_required)
+        text += ' ' * space_required
+        
+    
     spaces = payload_to_space(payload, bitsize)
     index = 0
     encoded = ""
@@ -159,21 +180,21 @@ if __name__ == "__main__":
     encode_parser = subparsers.add_parser("encode", help="Encode file with payload")
     encode_parser.add_argument("-i", "--input",type=argparse.FileType("r"), default=sys.stdin)
     encode_parser.add_argument("-p", "--payload", required=True, help="Payload to encode")
-    encode_parser.add_argument("-b", "--bitsize", required=False, choices=[1,2,4], default=2, help="How many bit per white space")
+    encode_parser.add_argument("-b", "--bitsize", required=False, choices=[1,2,4], type=int, default=2, help="How many bit per white space")
 
     decode_parser= subparsers.add_parser("decode", help="Extract payload from text")
     decode_parser.add_argument("-i", "--input",type=argparse.FileType("r"), default=sys.stdin)
-    decode_parser.add_argument("-b", "--bitsize", required=False, choices=[1,2,4], default=2, help="How many bit per white space")
+    decode_parser.add_argument("-b", "--bitsize", required=False, choices=[1,2,4], type=int, default=2, help="How many bit per white space")
     args = parser.parse_args()
 
     if args.command == "encode":
         text = args.input.read()
         payload = args.payload 
-        print(encode(text, payload))        
+        print(encode(text, payload, args.bitsize))        
 
     if args.command == "decode":
         text = args.input.read()
-        payload = decode(text)
+        payload = decode(text, args.bitsize)
         print(payload)            
     # message = """
     # Hello Mrs Dupont,

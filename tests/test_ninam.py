@@ -2,6 +2,8 @@ import ninam.__main__ as nim
 
 
 
+
+
 def test_payload():
 
 
@@ -33,6 +35,23 @@ def test_encode_decode():
 
     payload = "I love you" 
 
-    stegano_message = nim.encode(message,payload)
 
+    stegano_message = nim.encode(message,payload)
     assert payload == nim.decode(stegano_message)
+
+
+def test_extra_large():
+
+    # message with 8 spaces 
+    message ="a short very and nice message with 8 spaces"
+    
+    # This payload required 16 bits 
+    payload = "ah"
+
+    encoded = nim.encode(message, payload, bitsize=1)
+    end = encoded[-8:]
+
+    # Last 8 caracters must be extra spaces
+    for letter in end:
+        assert ord(letter) in nim.WHITESPACE
+    
