@@ -4,8 +4,10 @@
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/ninam)
 
 
-Ninam is a steganography tool for encoding and decoding a payload in a text file by replacing white space characters.
+Ninam is a steganography tool for encoding and decoding a payload in a text by replacing white space characters.
 I created this programme because I remembered when I was younger that I liked to send people secret messages by hiding them in a text message or an email.
+
+[See the demo](https://dridk.github.io/ninam/)
 
 ## How it works ? 
 
