@@ -3,11 +3,169 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-default.min.css">
+	<script src="https://cdn.jsdelivr.net/pyodide/v0.26.0/full/pyodide.js"></script>
+
+
 	<title>Document</title>
+
+	<style>
+		body {
+			min-height: 100vh;
+		}
+		fieldset {
+			display: flex;
+			flex-direction: column;
+			height: 300px;
+		}
+
+		textarea {
+			height: 100%;
+		}
+
+		header {
+			display: flex;
+			justify-content: space-between;
+		}
+		footer {
+			position: fixed;
+			bottom: 0;
+			width: 100vw; 
+		}
+
+		.container {
+			margin-top: 10px;
+			margin: 20px;
+		}
+
+		#title {
+			color: white;
+			margin-left: 10px;
+		}
+
+		#right-header a
+		{
+			border: none;
+		}
+
+		#description {
+			
+		}
+	</style>
 </head>
 <body>
+	<i class="fa fa-bed" aria-hidden="true"></i>
+	<header>
+		<a href="#" class="logo"><span class="icon-mail"></span><strong id="title">Ninam</strong> Hide a secret message in a text</a>
 
-	<h1>Ninam </h1>
-	
+		<div id="right-header">
+			<a href="https://github.com/dridk/ninam" class="button">Github</a>
+			<a href="https://pypi.org/project/ninam/" class="button">Pypi</a>
+		</div>
+	</header>
+	<div class="container">
+
+		<div id="description">Ninam is a <a href="https://en.wikipedia.org/wiki/Steganography">steganography</a> tool for encoding and decoding a payload in a text by replacing white space characters. I created this program because I remembered when I was younger that I liked to hide a secret messages in my email using white text color printed on on a white background. This method is now more sophisticated.
+
+			<h2>How it works</h2>
+		All spaces in the text are recovered and replaced by other <a href="https://en.wikipedia.org/wiki/Whitespace_character">unicode space characters</a>. If there is not enough space available, additional spaces will be added at the end. You can use 1-bit, 2-bit or 4-bit encoding. This means using 2, 4 or 16 white spaces. The larger the bitsize, the larger your payload can be, but at the risk of having slightly suspicious white spaces which doesn't work everywhere.
+		</div>
+
+		<hr>
+
+		<div class="row" >
+
+			<div class="col-sm-12 col-md-6 col-lg-6">
+				<div>
+					<button class="primary" onclick="encode()">Encode</button>
+					<select id="bit_selector" class="select" name="fruits">
+						<option value="1">1 bit per whitespace</option>
+						<option value="2">2 bit per whitespace</option>
+						<option value="4">4 bit per whitespace</option>
+					</select>
+
+					<fieldset>
+						<input type="text" id="payload" placeholder="payload"/>
+						<textarea id="decoded_text", placeholder="Raw text"></textarea>
+					</fieldset>
+				</div>
+			</div>
+			<div class="col-sm-12 col-md-6 col-lg-6 ">
+				<div>
+					<button class="secondary" onclick="decode()">Decode</button>
+
+					<fieldset>
+						<textarea id="encoded_text", placeholder="stegano text"></textarea>
+					</fieldset>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<footer>
+		Running with python <a href="https://pyodide.org/en/stable/">Pyodide</a> and <a href="https://minicss.us/">mini.css</a>
+	</footer>
 </body>
+
+
+<script type="text/javascript">
+
+	let pyodide;
+	async function main(){
+		pyodide = await loadPyodide();
+
+		await pyodide.loadPackage("micropip");
+		const micropip = pyodide.pyimport("micropip");
+		await micropip.install('ninam==1.0.1');
+
+
+	}
+
+	window.addEventListener('load', function() {main()});
+
+
+
+	async function encode()
+	{
+		pyodide.runPython(`
+			from ninam.__main__ import encode, decode
+			import js 
+
+			bits = int(js.document.getElementById('bit_selector').value);
+			payload = js.document.getElementById('payload').value;
+			input_text = js.document.getElementById('decoded_text');
+			output_text = js.document.getElementById('encoded_text');
+
+			output_text.value = encode(input_text.value,payload,bits);
+
+			`);
+	}
+
+
+	async function decode() 
+	{
+		pyodide.runPython(`
+			from ninam.__main__ import encode, decode
+			import js 
+
+			bits = int(js.document.getElementById('bit_selector').value);
+			payload = js.document.getElementById('payload');
+			input_text = js.document.getElementById('decoded_text');
+			output_text = js.document.getElementById('encoded_text');
+			payload.value = decode(output_text.value,bits);
+			input_text.value = ""
+			`);
+
+	}
+
+	document.addEventListener('DOMContentLoaded', function() {
+		console.log('Le DOM est entièrement chargé et analysé');
+
+
+
+	});
+
+
+</script>
+
 </html>
